@@ -9,10 +9,9 @@ print(raw_models)
 for file in raw_models:
     input_model_path = file
     bpy.ops.wm.read_factory_settings()
-    for scene in bpy.data.scenes:
-        for obj in scene.objects:
-            scene.objects.unlink(obj)
-
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete()
+    
     bpy.ops.import_scene.obj(filepath = input_model_path)
 
     mesh_object = [(o,len(o.data.polygons)) for o in bpy.data.objects if o.type=='MESH' ]
