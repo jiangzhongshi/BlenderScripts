@@ -4,9 +4,6 @@ import gc
 sys.path.append('..')
 sys.path.append(os.path.expanduser('~/Workspace/SurfaceNN/src'))
 
-import utils.mesh as mesh
-import utils.graph as graph
-
 import numpy as np
 import itertools
 import pyigl as igl
@@ -36,8 +33,7 @@ def rotate_data(V,F):
 
 
 if __name__ == '__main__':
-     argv = sys.argv
-     argv = argv[argv.index("--") + 1:]  # get all args after "--"
+     argv = sys.argv[argv.index("--") + 1:]  # get all args after "--"
      input_path = '/mnt/ssd/tmp/zhjiang/'+argv[0]
      for i, filename in enumerate(glob.iglob(input_path + '_out/*.obj')):
          try:
