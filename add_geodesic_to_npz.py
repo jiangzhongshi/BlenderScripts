@@ -1,13 +1,13 @@
+#!/mnt/ilcompf2d0/user/zhjiang/miniconda2/bin/python
 import pyigl as igl
 import glob
 import os
 import numpy as np
 import sys
-sys.path.append(os.path.expanduser('/home/zj495/Workspace/'))
+sys.path.append(os.path.expanduser('~/Workspace/libigl/python'))
 from iglhelpers import p2e,e2p
 import tables
 import multiprocessing
-import random
 argv = sys.argv
 argv = argv[argv.index("--") + 1:]
 
@@ -42,6 +42,26 @@ def append_normal_curvature(filename):
         #    h5file.create_array(h5file.root, "H", e2p(H))
         #    h5file.create_array(h5file.root, "K", K)
 
+def append_geodesic_to_npz(filename):
+    if os.path.exists(out_path + filename):
+        return
+    with np.load(npz_path + filename) as npl:
+        if not 'vdist' in npl:
+            print("No Vdist"+filename)
+            return
+        V, F, vdist = npl['V'], npl['F'], npl['vdist']
+	eV = igl.eigen.MatrixXd(V)
+	eF = igl.eigen.MatrixXi(F)
+	VS = igl.eigen.MatrixXi(np.where(vdist==0)[0].astype(np.int32))
+	FS = igl.eigen.MatrixXi(np.array([],dtype=np.int32))
+	VT = igl.eigen.MatrixXi(np.array(range(eV.rows()), dtype=np.int32))
+	FT = igl.eigen.MatrixXi(np.array([],dtype=np.int32))
+	D = igl.eigen.MatrixXd()
+	igl.geodesic.exact_geodesic(eV,eF,VS,FS,VT,FT,D)
+	geodist = e2p(D)
+        np.savez_compressed(out_path+filename, V=V, F=F, L=npl['L'], geodist=geodist, vdist=vdist)
+
+
 def append_vdist_to_npz(filename):
     with np.load(filename) as npl:
         if 'vdist' in npl:
@@ -63,7 +83,6 @@ def append_vdist_to_npz(filename):
 
 def append_Laplacian(filename):
     with np.load(npz_path + filename) as frame:
-
         if 'vdist' not in frame:
             V, F, seams, bnds = frame['V'], frame['F'], frame['seams'], frame['bnds']
             if seams.size + bnds.size ==0:
@@ -90,8 +109,5 @@ def append_Laplacian(filename):
     os.remove(npz_path + filename)
 
 if __name__ == '__main__':
-    p = multiprocessing.Pool(1)
-    random.shuffle(npz_list)
-    p.map(append_Laplacian, npz_list)
-
-
+    p = multiprocessing.Pool(int(argv[2]))
+    p.map(append_geodesic_to_npz, npz_list)
